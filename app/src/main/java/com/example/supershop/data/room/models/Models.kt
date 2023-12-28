@@ -19,7 +19,7 @@ data class Item(
     @PrimaryKey(autoGenerate = true)
     val id: Int = 0,
     val itemName: String,
-    val quantity: Int,
+    val quantity: String,
     val listId: Int,
     val storeIdFk: Int,
     val date: Date,
@@ -33,7 +33,4 @@ data class Store(
     val id: Int = 0,
     val listIdFk: Int,
     val storeName: String,
-    val address: String,
-    val city: String,
-    val state: String,
 )
