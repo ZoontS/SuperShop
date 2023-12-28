@@ -3,6 +3,9 @@ package com.example.supershop.ui.repository
 import com.example.supershop.data.room.ItemDao
 import com.example.supershop.data.room.ListDao
 import com.example.supershop.data.room.StoreDao
+import com.example.supershop.data.room.models.Item
+import com.example.supershop.data.room.models.ShoppingList
+import com.example.supershop.data.room.models.Store
 
 class Repository(
     private val listDao: ListDao,
@@ -13,4 +16,27 @@ class Repository(
     val getItemsWithListAndStore = listDao.getItemsWithStoreAndList()
 
     fun getItemWithStoreAndList(id:Int) = listDao.getItemWithStoreAndListFilteredById(id)
+
+    fun getItemWithStoreAndListFilteredById(id: Int) =
+        listDao.getItemsWithStoreAndListFilteredById(id)
+
+    suspend fun insertList(shoppingList: ShoppingList){
+        listDao.insert(shoppingList)
+    }
+
+    suspend fun insertStore(store: Store){
+        storeDao.insert(store)
+    }
+
+    suspend fun insertItem(item: Item){
+        itemDao.insert(item)
+    }
+
+    suspend fun deleteItem(item: Item){
+        itemDao.delete(item)
+    }
+
+    suspend fun updateItem(item: Item){
+        itemDao.update(item)
+    }
 }
