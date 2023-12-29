@@ -18,20 +18,33 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.ripple.rememberRipple
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Checkbox
+import androidx.compose.material3.DismissValue
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExtendedFloatingActionButton
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.Surface
+import androidx.compose.material3.SwipeToDismiss
 import androidx.compose.material3.Text
+import androidx.compose.material3.rememberDismissState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -41,23 +54,38 @@ import com.example.supershop.data.room.models.Item
 import com.example.supershop.ui.Category
 import com.example.supershop.ui.Utils
 import com.example.supershop.ui.theme.Shapes
+import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 
+@OptIn(ExperimentalMaterial3Api::class)
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 @Composable
 fun HomeScreen(
-    onNavigate: (Int) -> Unit
+    onNavigate: (Int) -> Unit,
 ) {
+    val scope = rememberCoroutineScope()
+    val snackbarHostState = remember { SnackbarHostState() }
     val homeViewModel = viewModel(modelClass = HomeViewModel::class.java)
     val homeState = homeViewModel.state
+    if (homeState.items.isEmpty()){
+        LaunchedEffect(snackbarHostState) {
+            snackbarHostState.showSnackbar(
+                message = "Made By Narendra Arkan Putra Darmawan - 1313621043",
+                actionLabel = "Close"
+            )
+        }
+    }
     Scaffold(
+        snackbarHost = {
+            SnackbarHost(hostState = snackbarHostState)
+        },
         floatingActionButton = {
             FloatingActionButton(onClick = { onNavigate.invoke(-1) }) {
                 Icon(imageVector = Icons.Default.Add, contentDescription = null)
             }
-        }
+        },
     ) {
         LazyColumn {
             item {
@@ -75,13 +103,34 @@ fun HomeScreen(
                 }
             }
             items(homeState.items) {
-                ShoppingItems(
-                    item = it,
-                    isChecked = it.item.isChecked,
-                    onCheckedChange = homeViewModel::onItemCheckedChange
-                ) {
-                    onNavigate.invoke(it.item.id)
-                }
+                val dismissState = rememberDismissState(
+                    confirmValueChange = { value ->
+                        if (value == DismissValue.DismissedToEnd) {
+                            homeViewModel.deleteItem(it.item)
+                        }
+                        true
+                    }
+                )
+                SwipeToDismiss(
+                    state = dismissState,
+                    background = {
+                        Surface(
+                            modifier = Modifier.fillMaxWidth(), color = Color.Red
+                        ) {
+
+                        }
+                    },
+                    dismissContent = {
+                        ShoppingItems(
+                            item = it,
+                            isChecked = it.item.isChecked,
+                            onCheckedChange = homeViewModel::onItemCheckedChange
+                        ) {
+                            onNavigate.invoke(it.item.id)
+                        }
+                    }
+                )
+
             }
         }
     }
@@ -108,7 +157,7 @@ fun CategoryItem(
             if (selected) MaterialTheme.colorScheme.primary.copy(.5f)
             else MaterialTheme.colorScheme.onSurface,
         ),
-        shape = Shapes.large,
+        shape = MaterialTheme.shapes.extraLarge,
         colors = if (selected) CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.primary,
             contentColor = MaterialTheme.colorScheme.onPrimary
